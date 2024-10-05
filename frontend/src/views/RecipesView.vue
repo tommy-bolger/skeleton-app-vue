@@ -6,11 +6,31 @@ import {useRoute, useRouter} from "vue-router";
 const router = useRouter();
 const route = useRoute();
 
+const initialLoad = ref(true);
 const recipesPage = ref({});
 const loading = ref(true);
 const rowsPerPage = ref(25);
 const page = ref(1);
 const filters = ref({});
+
+const initializeBackendVariables = () => {
+    rowsPerPage.value = Number(route.query?.limit ?? 25);
+    page.value = Number(route.query?.page ?? 1);
+
+    if (route.query?.author_email) {
+        filters.value['author_email'] = route.query.author_email;
+    }
+
+    if (route.query?.keyword) {
+        filters.value['keyword'] = route.query.keyword;
+    }
+
+    if (route.query?.ingredient) {
+        filters.value['ingredient'] = route.query.ingredient;
+    }
+};
+
+initializeBackendVariables();
 
 const getBackendData = () => {
     loading.value = true;
@@ -23,10 +43,14 @@ const getBackendData = () => {
         backendUrl.searchParams.set(key, value.toString());
     }
 
-    router.push({
-        name: 'home',
-        params: backendUrl.searchParams
-    });
+    if (!initialLoad.value) {
+        router.push({
+            name: 'home',
+            query: Object.fromEntries(backendUrl.searchParams.entries())
+        });
+    } else {
+        initialLoad.value = false;
+    }
 
     fetch(backendUrl.toString())
         .then(response => response.json())
@@ -37,21 +61,7 @@ const getBackendData = () => {
 };
 
 onMounted(() => {
-    rowsPerPage.value = Number(route.query?.limit ?? 25);
-    page.value = Number(route.query?.page ?? 1);
-
-    if (route.query?.author_email) {
-
-    }
-
-    if (route.query?.keyword) {
-
-    }
-
-    if (route.query?.ingredient) {
-
-    }
-
+    initializeBackendVariables();
     getBackendData();
 });
 

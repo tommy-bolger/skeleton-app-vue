@@ -7,6 +7,8 @@ import InputText from "primevue/inputtext";
 import IconField from "primevue/iconfield";
 import InputIcon from "primevue/inputicon";
 import Button from "primevue/button";
+import IngredientsList from "@/components/IngredientsList.vue";
+import StepsList from "@/components/StepsList.vue";
 
 const props = defineProps({
     pageData: {
@@ -143,7 +145,12 @@ const clearKeyword = () => {
             <template #body="slotProps">
                 <div class="flex">
                     <RouterLink
-                        :to="`/${slotProps.data.slug}`"
+                        :to="{
+                            name: 'recipe',
+                            params: {
+                                slug: slotProps.data.slug
+                            }
+                        }"
                         class="cursor-pointer mx-auto"
                     >
                         <i class="pi pi-eye" />
@@ -190,13 +197,10 @@ const clearKeyword = () => {
                 />
             </template>
             <template #body="slotProps">
-                <ul class="list-disc pl-5">
-                    <li
-                        v-for="ingredient in slotProps.data.ingredients"
-                    >
-                        {{ ingredient.description }}
-                    </li>
-                </ul>
+                <IngredientsList
+                    :ingredients="slotProps.data.ingredients"
+                    class="pl-5"
+                />
             </template>
         </Column>
         <Column
@@ -204,13 +208,10 @@ const clearKeyword = () => {
             header="Steps"
         >
             <template #body="slotProps">
-                <ol class="list-decimal pl-5">
-                    <li
-                        v-for="step in slotProps.data.steps"
-                    >
-                        {{ step.description }}
-                    </li>
-                </ol>
+                <StepsList
+                    :steps="slotProps.data.ingredients"
+                    class="pl-5"
+                />
             </template>
         </Column>
     </DataTable>
