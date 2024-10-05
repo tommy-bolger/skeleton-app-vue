@@ -20,7 +20,7 @@ class StepFactory extends Factory
         return [
             'recipe_id' => Recipe::factory(),
             'description' => $this->faker->text(),
-            'step_number' => $this->faker->numberBetween(),
+            'step_number' => $this->faker->numberBetween(1, 100),
         ];
     }
 }

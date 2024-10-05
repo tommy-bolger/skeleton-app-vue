@@ -56,7 +56,7 @@ const home = computed(() => {
               </RouterLink>
           </template>
       </Breadcrumb>
-      <div class="mb-5">
+      <div class="mb-1">
           <Skeleton
               v-if="loading"
           />
@@ -75,7 +75,7 @@ const home = computed(() => {
           <p
               v-else
           >
-              By {{ recipe.author_email }}
+              <span class="text-sm">By {{ recipe.author_email }}</span>
           </p>
       </div>
       <div class="mb-5">

@@ -11,6 +11,8 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 class RecipesDataset
 {
+    public const int MAX_LIMIT = 25;
+
     private int $limit = 25;
 
     private int $page = 1;
@@ -40,7 +42,7 @@ class RecipesDataset
         }
 
         if ($limit < 1 || $limit > 25) {
-            $limit = 25;
+            $limit = static::MAX_LIMIT;
         }
 
         $this->page = $page;
