@@ -1,4 +1,4 @@
-FROM nginx:1.21.6-alpine
+FROM nginx:1.27-alpine
 
 ARG BACKEND_DOMAIN
 ARG FRONTEND_DOMAIN

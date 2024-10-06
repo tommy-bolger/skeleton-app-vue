@@ -11,10 +11,9 @@ docker compose exec wild-alaskan-backend php artisan key:generate
 
 echo "Restarting environment..."
 docker compose down
-docker volume rm wild-alaskan-test_wild-alaskan-mysql
 docker compose up -d
 
-sleep 10
+sleep 5
 
 echo "Running migrations..."
 docker compose exec wild-alaskan-backend php artisan migrate
