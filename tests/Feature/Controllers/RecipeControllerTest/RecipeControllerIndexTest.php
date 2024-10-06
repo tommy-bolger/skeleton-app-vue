@@ -4,9 +4,7 @@ namespace Tests\Feature\Controllers\RecipeControllerTest;
 
 use App\Enums\SortColumns;
 use App\Enums\SortDirections;
-use App\Models\Ingredient;
 use App\Models\Recipe;
-use App\Models\Step;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Collection;
 use Illuminate\Testing\Fluent\AssertableJson;
@@ -17,6 +15,7 @@ class RecipeControllerIndexTest extends TestCase
 {
     use RefreshDatabase;
     use SetsUpForRecipesDatasetTest;
+    use SharedRecipeControllerTestMethods;
 
     private const string API_ROUTE_NAME = 'recipes.index';
 
@@ -26,32 +25,7 @@ class RecipeControllerIndexTest extends TestCase
 
         /** @var Recipe $recipe */
         foreach ($recipes as $recipe) {
-            $recipe->loadMissing([
-                'ingredients',
-                'steps',
-            ]);
-
-            $expectedRecipes[] = [
-                'slug' => $recipe->slug,
-                'name' => $recipe->name,
-                'description' => $recipe->description,
-                'author_email' => $recipe->author_email,
-                'ingredients' => $recipe->ingredients
-                    ->map(function (Ingredient $ingredient) {
-                        return $ingredient->only('description');
-                    })
-                    ->toArray(),
-                'steps' => $recipe->steps
-                    ->sortBy('step_number')
-                    ->values()
-                    ->map(function (Step $step) {
-                        return $step->only([
-                            'step_number',
-                            'description',
-                        ]);
-                    })
-                    ->toArray(),
-            ];
+            $expectedRecipes[] = $this->getExpectedRecipe($recipe);
         }
 
         return $expectedRecipes;
