@@ -1,0 +1,51 @@
+server_names_hash_bucket_size 64;
+
+server {
+      listen 80 default;
+
+      server_name <SERVER_NAME>;
+      access_log off;
+      error_log off;
+
+      location / {
+		  return 301 https://$host$request_uri;
+	  }
+}
+
+server {
+    listen 443 ssl;
+    server_name <SERVER_NAME>;
+    root /var/www/public;
+
+    include /etc/nginx/ssl.conf;
+
+    add_header X-Frame-Options "SAMEORIGIN";
+	add_header X-Content-Type-Options "nosniff";
+
+    index index.php index.html;
+
+    charset utf-8;
+
+    location / {
+		try_files $uri $uri/ /index.php?$query_string;
+		gzip_static on;
+	}
+
+	location = /favicon.ico { access_log off; log_not_found off; }
+	location = /robots.txt  { access_log off; log_not_found off; }
+
+	error_page 404 /index.php;
+
+    location ~ \.php$ {
+        try_files $uri =404;
+        fastcgi_split_path_info ^(.+\.php)(/.+)$;
+        fastcgi_pass wild-alaskan-backend:9000;
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_param PATH_INFO $fastcgi_path_info;
+    }
+
+    location ~ /\.(?!well-known).* {
+		deny all;
+	}
+}

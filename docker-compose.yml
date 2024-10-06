@@ -1,55 +1,104 @@
 services:
-    laravel.test:
-        build:
-            context: ./vendor/laravel/sail/runtimes/8.2
-            dockerfile: Dockerfile
-            args:
-                WWWGROUP: '${WWWGROUP}'
-        image: sail-8.2/app
-        extra_hosts:
-            - 'host.docker.internal:host-gateway'
-        ports:
-            - '${BACKEND_PORT:-8888}:80'
-            - '${FRONTEND_PORT:-3000}:3000'
-        environment:
-            WWWUSER: '${WWWUSER}'
-            LARAVEL_SAIL: 1
-            XDEBUG_MODE: '${SAIL_XDEBUG_MODE:-off}'
-            XDEBUG_CONFIG: '${SAIL_XDEBUG_CONFIG:-client_host=host.docker.internal}'
-            IGNITION_LOCAL_SITES_PATH: '${PWD}'
-        volumes:
-            - '.:/var/www/html'
-        networks:
-            - sail
-        depends_on:
-            - mysql
-    mysql:
-        image: 'mysql/mysql-server:8.0'
-        ports:
-            - '${FORWARD_DB_PORT:-3333}:3306'
-        environment:
-            MYSQL_ROOT_PASSWORD: '${DB_PASSWORD}'
-            MYSQL_ROOT_HOST: '%'
-            MYSQL_DATABASE: '${DB_DATABASE}'
-            MYSQL_USER: '${DB_USERNAME}'
-            MYSQL_PASSWORD: '${DB_PASSWORD}'
-            MYSQL_ALLOW_EMPTY_PASSWORD: 1
-        volumes:
-            - 'sail-mysql:/var/lib/mysql'
-            - './vendor/laravel/sail/database/mysql/create-testing-database.sh:/docker-entrypoint-initdb.d/10-create-testing-database.sh'
-        networks:
-            - sail
-        healthcheck:
-            test:
-                - CMD
-                - mysqladmin
-                - ping
-                - '-p${DB_PASSWORD}'
-            retries: 3
-            timeout: 5s
+  wild-alaskan-certs:
+    build:
+      context: ./docker/certs
+      dockerfile: Dockerfile
+      args:
+        BACKEND_DOMAIN: 'backend.wild-alaskan.test'
+        FRONTEND_DOMAIN: 'frontend.wild-alaskan.test'
+        COUNTRY: 'US'
+        STATE: 'AK'
+        ORGANIZATION: 'Wild Alaskan'
+    image: wild-alaskan/certs
+    container_name: wild-alaskan-certs
+    restart: on-failure
+    tty: false
+    networks:
+      - wild-alaskan
+    volumes:
+      - wild-alaskan-certs:/etc/wild-alaskan-certs
+  wild-alaskan-nginx:
+    build:
+      context: ./docker/nginx
+      dockerfile: Dockerfile
+      args:
+        BACKEND_DOMAIN: 'backend.wild-alaskan.test'
+        FRONTEND_DOMAIN: 'frontend.wild-alaskan.test'
+    image: wild-alaskan/nginx
+    container_name: wild-alaskan-nginx
+    restart: unless-stopped
+    tty: true
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - wild-alaskan-certs:/etc/wild-alaskan-certs
+      - ./:/var/www
+    networks:
+      wild-alaskan:
+        aliases:
+          - backend.wild-alaskan.test
+          - frontend.wild-alaskan.test
+    depends_on:
+      - wild-alaskan-certs
+  wild-alaskan-frontend:
+    build:
+      context: ./docker/assets
+      dockerfile: Dockerfile
+    image: wild-alaskan/assets
+    container_name: wild-alaskan-frontend
+    restart: unless-stopped
+    tty: true
+    volumes:
+      - ./:/var/www
+    networks:
+      - wild-alaskan
+  wild-alaskan-backend:
+    build:
+      context: ./docker/php-fpm
+      dockerfile: Dockerfile
+    image: wild-alaskan/php-fpm
+    container_name: wild-alaskan-backend
+    restart: unless-stopped
+    tty: true
+    volumes:
+      - ./:/var/www
+    networks:
+      - wild-alaskan
+    depends_on:
+      - wild-alaskan-nginx
+      - wild-alaskan-frontend
+      - wild-alaskan-mysql
+  wild-alaskan-mysql:
+    build:
+      context: ./docker/mysql
+      dockerfile: Dockerfile
+    image: wild-alaskan/mysql
+    container_name: wild-alaskan-mysql
+    ports:
+      - '3306:3306'
+    environment:
+      MYSQL_ROOT_PASSWORD: 'local_dev'
+      MYSQL_ROOT_HOST: '%'
+      MYSQL_DATABASE: 'wild_alaskan'
+      MYSQL_USER: 'wild_alaskan_admin'
+      MYSQL_PASSWORD: 'local_dev'
+    volumes:
+      - 'wild-alaskan-mysql:/var/lib/mysql'
+    networks:
+      - wild-alaskan
+    healthcheck:
+      test:
+        - CMD
+        - mysqladmin
+        - ping
+        - '-plocal_dev'
+      retries: 3
+      timeout: 5s
 networks:
-    sail:
-        driver: bridge
+  wild-alaskan:
 volumes:
-    sail-mysql:
-        driver: local
+  wild-alaskan-certs:
+    driver: local
+  wild-alaskan-mysql:
+    driver: local
