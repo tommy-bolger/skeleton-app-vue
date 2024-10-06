@@ -1,6 +1,6 @@
 <script setup>
 
-import {defineProps, defineEmits, defineModel, ref, computed} from 'vue';
+import {defineProps, defineEmits, ref, computed, watch} from 'vue';
 import Column from "primevue/column";
 import DataTable from "primevue/datatable";
 import InputText from "primevue/inputtext";
@@ -32,19 +32,21 @@ const props = defineProps({
     }
 });
 
-const localRowsPerPage = ref(props.rowsPerPage);
-const localPage = ref(props.page);
-const localFilters = ref({
-    author_email: {
-        value: props.filters?.author_email
-    },
-    keyword: {
-        value: props.filters?.keyword
-    },
-    ingredient: {
-        value: props.filters?.ingredient
-    },
-});
+const getLocalFiltersBody = () => {
+    return {
+        author_email: {
+            value: props.filters?.author_email
+        },
+        keyword: {
+            value: props.filters?.keyword
+        },
+        ingredient: {
+            value: props.filters?.ingredient
+        },
+    };
+};
+
+const localFilters = ref(getLocalFiltersBody());
 
 const emit = defineEmits([
     'pageChanged',
@@ -58,28 +60,19 @@ const rowsPerPageOptions = [
 ];
 
 const getFirstOffset = computed(() => {
-    return (localPage.value - 1) * localRowsPerPage.value;
+    return (props.page - 1) * props.rowsPerPage;
 });
 
 const setCurrentPage = (event) => {
-    localRowsPerPage.value = event.rows;
+    const localPage = event.rows !== props.rowsPerPage ? 1 : event.page + 1;
 
-    if (localRowsPerPage.value !== props.rowsPerPage) {
-        localPage.value = 1;
-    } else {
-        localPage.value = event.page + 1;
-    }
-
-    emit('pageChanged', localPage.value, localRowsPerPage.value);
+    emit('pageChanged', localPage, event.rows);
 };
 
 const setCurrentFilters = (eventFilters) => {
-    localPage.value = 1;
-    localFilters.value = eventFilters;
-
     const emitFilters = {};
 
-    for (let [key, value] of Object.entries(localFilters.value)) {
+    for (let [key, value] of Object.entries(eventFilters)) {
         if (value.value) {
             emitFilters[key] = value.value;
         }
@@ -89,9 +82,15 @@ const setCurrentFilters = (eventFilters) => {
 };
 
 const clearKeyword = () => {
-    localFilters.value.keyword.value = null;
-    setCurrentFilters(localFilters.value);
+    const eventFilters = localFilters.value;
+
+    eventFilters.keyword.value = null;
+    setCurrentFilters(eventFilters);
 };
+
+watch(() => props.filters, () => {
+    localFilters.value = getLocalFiltersBody();
+});
 
 </script>
 
@@ -108,7 +107,7 @@ const clearKeyword = () => {
         :first="getFirstOffset"
         :totalRecords="pageData?.meta?.total"
         :rowsPerPageOptions="rowsPerPageOptions"
-        :rows="localRowsPerPage"
+        :rows="rowsPerPage"
         v-model:filters="localFilters"
         filterDisplay="row"
         @page="setCurrentPage"
@@ -119,7 +118,7 @@ const clearKeyword = () => {
         <template #header>
             <div class="flex justify-end">
                 <Button
-                    v-if="localFilters.keyword.value"
+                    v-if="filters?.keyword"
                     type="button"
                     icon="pi pi-filter-slash"
                     label="Clear"

@@ -3,7 +3,7 @@ import HomeView from '@/views/RecipesView.vue'
 import RecipeView from "@/views/RecipeView.vue";
 
 const router = createRouter({
-    history: createWebHistory(import.meta.env.BASE_URL),
+    history: createWebHistory(),
     routes: [
         {
             path: '/',
@@ -23,7 +23,7 @@ const router = createRouter({
             }
         },
     ]
-})
+});
 
 router.beforeEach((to, from, next) => {
     document.title = to.meta.title;
