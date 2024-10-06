@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature\Services;
+namespace Tests\Feature\Traits;
 
 use App\Models\Ingredient;
 use App\Models\Recipe;

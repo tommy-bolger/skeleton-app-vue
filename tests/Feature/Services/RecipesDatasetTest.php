@@ -10,6 +10,7 @@ use App\Models\Step;
 use App\Services\RecipesDataset;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Collection;
+use Tests\Feature\Traits\SetsUpForRecipesDatasetTest;
 use Tests\TestCase;
 
 class RecipesDatasetTest extends TestCase
